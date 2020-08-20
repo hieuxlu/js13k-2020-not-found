@@ -1,21 +1,15 @@
 import { Drawing } from './drawing';
 import { Game } from './game';
-
-interface ISettings {
-  tps: number;
-}
-
-const Settings: ISettings = {
-  tps: 20,
-};
+import level1 from './level1.json';
+import { Settings } from './settings';
 
 const Draw = new Drawing(document.getElementById('c') as HTMLCanvasElement);
-const game = new Game(Draw);
+const game = new Game(level1, Draw);
 
 let previous: number;
 let accumulator = 0; // stores incrementing value (in seconds)
 const update = (time: number) => {
-  window.requestAnimationFrame(update);
+  // window.requestAnimationFrame(update);
   if (previous === undefined) {
     previous = time;
   }
@@ -30,6 +24,7 @@ const update = (time: number) => {
 
   game.draw(accumulator);
   previous = time;
+  window.requestAnimationFrame(update);
 };
 
 window.requestAnimationFrame(update);
