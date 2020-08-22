@@ -5,17 +5,22 @@ import { Settings } from './settings';
 export class Drawing {
   public accumulator: number = 0;
   private ctx: CanvasRenderingContext2D;
-  private screenWidth: number;
-  private screenHeight: number;
+  private screenWidth!: number;
+  private screenHeight!: number;
   private scale = 1;
   private camera: IPoint = { x: 0, y: 0 };
 
-  constructor(c: HTMLCanvasElement) {
+  constructor(private c: HTMLCanvasElement) {
     this.ctx = c.getContext('2d')!;
-    c.width = c.clientWidth;
-    c.height = c.clientHeight;
-    this.screenWidth = c.width;
-    this.screenHeight = c.height;
+    this.setScreen()
+    window.addEventListener('resize', this.setScreen.bind(this))
+  }
+
+  setScreen = () => {
+    this.c.width = this.c.clientWidth;
+    this.c.height = this.c.clientHeight;
+    this.screenWidth = this.c.width;
+    this.screenHeight = this.c.height;
   }
 
   interpolate = (position: Vec2, movementVector: Vec2) => {
