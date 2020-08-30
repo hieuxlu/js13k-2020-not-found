@@ -60,6 +60,14 @@ module.exports = (env, argv) => {
           ],
           exclude: /node_modules/,
         },
+        {
+          test: /\.(png|jpe?g|gif)$/i,
+          use: [
+            {
+              loader: 'file-loader',
+            },
+          ],
+        },
       ],
     },
     plugins,

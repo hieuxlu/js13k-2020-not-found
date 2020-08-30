@@ -1,14 +1,17 @@
 {
   "scripts": {
     "start": "webpack-dev-server --open",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production && npm run minify-zip",
+    "minify-zip": "advzip -z -3 dist/bundle.zip"
   },
   "dependencies": {
     "gl-matrix": "^3.3.0",
     "typescript": "^3.9.7"
   },
   "devDependencies": {
+    "advzip-bin": "^2.0.0",
     "eslint": "^7.7.0",
+    "file-loader": "^6.0.0",
     "fork-ts-checker-webpack-plugin": "^5.1.0",
     "html-webpack-plugin": "^4.3.0",
     "prettier": "^2.0.5",

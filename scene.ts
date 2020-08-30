@@ -4,18 +4,19 @@ export interface ProgramInfo {
   program: WebGLProgram;
   attribLocations: {
     vertexPosition: number,
-    vertexColor: number,
+    textureCoord: number,
   },
   uniformLocations: {
     projectionMatrix: WebGLUniformLocation,
-    modelViewMatrix: WebGLUniformLocation
+    modelViewMatrix: WebGLUniformLocation,
+    uSampler: WebGLUniformLocation,
   }
 }
 
 export interface Buffers {
   position: WebGLBuffer;
-  color: WebGLBuffer;
   indices: WebGLBuffer;
+  textureCoord: WebGLBuffer;
 }
 
 export const getProgramInfo = (gl: WebGLRenderingContext, shaderProgram: WebGLProgram): ProgramInfo => {
@@ -23,11 +24,12 @@ export const getProgramInfo = (gl: WebGLRenderingContext, shaderProgram: WebGLPr
     program: shaderProgram,
     attribLocations: {
       vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-      vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor')
+      textureCoord: gl.getAttribLocation(shaderProgram, 'aTextureCoord'),
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix')!,
-      modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix')!
+      modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix')!,
+      uSampler: gl.getUniformLocation(shaderProgram, 'uSampler')!,
     }
   };
 }
@@ -83,28 +85,43 @@ export const initBuffers = (gl: WebGLRenderingContext): Buffers => {
   // then use it to fill the current buffer.
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW)
 
-  const faceColors = [
-    [1.0, 1.0, 1.0, 1.0],    // Front face: white
-    [1.0, 0.0, 0.0, 1.0],    // Back face: red
-    [0.0, 1.0, 0.0, 1.0],    // Top face: green
-    [0.0, 0.0, 1.0, 1.0],    // Bottom face: blue
-    [1.0, 1.0, 0.0, 1.0],    // Right face: yellow
-    [1.0, 0.0, 1.0, 1.0],    // Left face: purple
-  ];
+  const textureCoordBuffer = gl.createBuffer()!;
+  gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
 
-  // Convert the array of colors into a table for all the vertices.
+  const textureCoordinates = [
+    // Front
+    0.0, 0.0,
+    0.333, 0.0,
+    0.333, 0.333,
+    0.0, 0.333,
+    // Back
+    0.333, 0.0,
+    0.666, 0.0,
+    0.666, 0.333,
+    0.333, 0.333,
+    // Top
+    0.666, 0.0,
+    1.0, 0.0,
+    1.0, 0.333,
+    0.666, 0.333,
+    // Bottom
+    0.0, 0.333,
+    0.333, 0.333,
+    0.333, 0.666,
+    0.0, 0.666,
+    // Right
+    0.333, 0.333,
+    0.666, 0.333,
+    0.666, 0.666,
+    0.333, 0.666,
+    // Left
+    0.666, 0.333,
+    1.0, 0.333,
+    1.0, 0.666,
+    0.666, 0.666,
+  ]
 
-  let colors: number[] = [];
-
-  for (var j = 0; j < faceColors.length; ++j) {
-    const c = faceColors[j];
-
-    // Repeat each color four times for the four vertices of the face
-    colors = colors.concat(c, c, c, c);
-  }
-  const colorBuffer = gl.createBuffer()!;
-  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordinates), gl.STATIC_DRAW)
 
   const indexBuffer = gl.createBuffer()!;
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -125,12 +142,12 @@ export const initBuffers = (gl: WebGLRenderingContext): Buffers => {
 
   return {
     position: positionBuffer,
-    color: colorBuffer,
-    indices: indexBuffer
+    textureCoord: textureCoordBuffer,
+    indices: indexBuffer,
   }
 }
 
-export const drawScene = (gl: WebGLRenderingContext, programInfo: ProgramInfo, buffers: Buffers, accumulator: number) => {
+export const drawScene = (gl: WebGLRenderingContext, programInfo: ProgramInfo, buffers: Buffers, texture: WebGLTexture, rotateX: number, rotateY: number, rotateZ: number) => {
   gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
   gl.clearDepth(1.0); // Clear everything
   gl.enable(gl.DEPTH_TEST); // Enable depth testing
@@ -170,14 +187,20 @@ export const drawScene = (gl: WebGLRenderingContext, programInfo: ProgramInfo, b
 
   mat4.rotate(modelViewMatrix, // destination matrix 
     modelViewMatrix, // matrix to rotate
-    accumulator, // amount to rorate in radians
+    rotateX, // amount to rorate in radians
     [0, 0, 1] // axis to rotate around 
   );
 
   mat4.rotate(modelViewMatrix, // destination matrix 
     modelViewMatrix, // matrix to rotate
-    accumulator * 0.7, // amount to rorate in radians
+    rotateY, // amount to rorate in radians
     [0, 1, 0] // axis to rotate around 
+  );
+
+  mat4.rotate(modelViewMatrix, // destination matrix 
+    modelViewMatrix, // matrix to rotate
+    rotateZ, // amount to rorate in radians
+    [1, 0, 0] // axis to rotate around 
   );
 
   // Tell WebGL how to pull out the positions from the position buffer
@@ -201,23 +224,23 @@ export const drawScene = (gl: WebGLRenderingContext, programInfo: ProgramInfo, b
   }
 
   // Tell WebGL how to pull out the colors from the color buffer
-  // into the vertexColor attribute
+  // into the textureCoord attribute
   {
-    const numComponents = 4;
+    const numComponents = 2;
     const type = gl.FLOAT;
     const normalize = false;
     const stride = 0;
     const offset = 0;
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord!);
     gl.vertexAttribPointer(
-      programInfo.attribLocations.vertexColor,
+      programInfo.attribLocations.textureCoord,
       numComponents,
       type,
       normalize,
       stride,
       offset,
     );
-    gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
+    gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
   }
 
   // Tell WebGL which indices to use to index the vertices
@@ -236,13 +259,17 @@ export const drawScene = (gl: WebGLRenderingContext, programInfo: ProgramInfo, b
     false,
     modelViewMatrix);
 
+  gl.activeTexture(gl.TEXTURE0);
+
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+
+  gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+
   {
-    // const offset = 0;
-    // const vertexCount = 4;
-    // gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount)
     const vertexCount = 36;
     const type = gl.UNSIGNED_SHORT;
     const offset = 0;
+
     gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
   }
 }
