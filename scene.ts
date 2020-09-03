@@ -63,7 +63,7 @@ export const initBuffers = (gl: WebGLRenderingContext): Buffers => {
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 
   // Now send the element array to GL
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW);
 
   return {
     position: positionBuffer,
@@ -162,5 +162,5 @@ export const drawScene = (gl: WebGLRenderingContext, programInfo: ProgramInfo, b
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
 
-  gl.drawElements(gl.TRIANGLES, buffers.vertexCount, gl.UNSIGNED_SHORT, buffers.offset);
+  gl.drawElements(gl.TRIANGLES, buffers.vertexCount, gl.UNSIGNED_INT, buffers.offset);
 }
