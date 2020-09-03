@@ -1,5 +1,7 @@
 import { mat4 } from 'gl-matrix'
-import { makeCube } from './build3d';
+import { makeCube, makeLevel } from './build3d';
+import { Vec2 } from './vector';
+import { world } from './levels';
 
 export interface ProgramInfo {
   program: WebGLProgram;
@@ -45,7 +47,7 @@ export const initBuffers = (gl: WebGLRenderingContext): Buffers => {
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
   // Now create an array of positions for the square
-  const { positions, textureCoordinates, indices, vertexCount, offset } = makeCube()
+  const { positions, textureCoordinates, indices, vertexCount, offset } = world;
 
   // Now pass the list of positions into WebGL to build the shape.
   // We do this by creating a Float from the Javascript array
@@ -91,7 +93,7 @@ export const drawScene = (gl: WebGLRenderingContext, programInfo: ProgramInfo, b
   const canvas = gl.canvas as HTMLCanvasElement;
   const aspect = canvas.clientWidth / canvas.clientHeight;
   const zNear = 0.1;
-  const zFar = 100.0;
+  const zFar = 1000.0;
   const projectionMatrix = mat4.create();
 
   // Handle resize viewport
@@ -107,7 +109,7 @@ export const drawScene = (gl: WebGLRenderingContext, programInfo: ProgramInfo, b
   // Now move the drawing position a bit to where we want to start drawing the square
   mat4.translate(modelViewMatrix, // destination matrix 
     modelViewMatrix, // matrix to translate
-    [-0.0, 0.0, -30.0] // amount to translate
+    [-0.0, 0.0, -100.0] // amount to translate
   )
 
   mat4.rotate(modelViewMatrix, // destination matrix 
