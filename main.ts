@@ -6,8 +6,9 @@ import { initShaderProgram, vsSource, fsSource } from './shader';
 import { getProgramInfo, drawScene, initBuffers } from './scene';
 import { loadTexture } from './texture';
 // import Texture from './cubetexture.png';
-// import Texture from './dirt.jpg';
-import Texture from './cubeatlas.png';
+import Texture from './dirt.jpg';
+// import Texture from './cubeatlas.png';
+// import Texture from './cubeatlas_original.png';
 
 console.log(Texture);
 
