@@ -1,25 +1,29 @@
-export const vsSource = `
-  attribute vec4 aVertexPosition;
-  attribute vec2 aTextureCoord;
+export const vsSource = `#version 300 es
+  in vec4 aVertexPosition;
+  in vec2 aTextureCoord;
 
   uniform mat4 uModelViewMatrix;
   uniform mat4 uProjectionMatrix;
 
-  varying highp vec2 vTextureCoord;
+  out vec2 vTextureCoord;
 
-  void main(void) {
+  void main() {
     gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
     vTextureCoord = aTextureCoord;
   }
 `
 
-export const fsSource = `
-  varying highp vec2 vTextureCoord;
+export const fsSource = `#version 300 es
+  precision highp float;
+
+  in vec2 vTextureCoord;
 
   uniform sampler2D uSampler;
+
+  out vec4 outColor;
   
-  void main(void) {
-    gl_FragColor = texture2D(uSampler, vTextureCoord);
+  void main() {
+    outColor = texture(uSampler, vTextureCoord);
   }
 `
 

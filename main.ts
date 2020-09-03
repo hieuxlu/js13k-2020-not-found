@@ -23,7 +23,7 @@ const setScreen = (canvas: HTMLCanvasElement) => {
 
 setScreen(canvas)
 window.addEventListener('resize', () => setScreen(canvas));
-const gl = canvas.getContext('webgl');
+const gl = canvas.getContext('webgl2');
 
 
 if (gl === null) {

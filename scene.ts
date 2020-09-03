@@ -126,7 +126,7 @@ export const drawScene = (gl: WebGLRenderingContext, programInfo: ProgramInfo, b
 
   mat4.rotate(modelViewMatrix, // destination matrix 
     modelViewMatrix, // matrix to rotate
-    rotateZ, // amount to rorate in radians
+    rotateZ - 1, // amount to rorate in radians
     [1, 0, 0] // axis to rotate around 
   );
 
