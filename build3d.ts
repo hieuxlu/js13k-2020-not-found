@@ -54,34 +54,34 @@ export const makeCube = (pos: Vec2, size: number, z: number = 0) => {
   const textureCoordinates = [
     // Front
     0.0, 0.0,
-    0.1, 0.0,
-    0.1, 0.1,
-    0.0, 0.1,
+    0.0, 0.5,
+    0.5, 0.5,
+    0.5, 0.0,
     // Back
-    0.0, 0.333,
-    0.666, 0.333,
-    0.666, 1.0,
-    0.0, 1.0,
+    0.5, 0.0,
+    1.0, 0.0,
+    1.0, 0.5,
+    0.5, 0.5,
     // Top
+    0.0, 0.5,
+    0.5, 0.5,
+    0.5, 1.0,
     0.0, 1.0,
-    1.0, 1.0,
-    1.0, 0.0,
-    0.0, 0.0,
     // Bottom
-    1.0, 1.0,
-    1.0, 0.0,
-    0.0, 0.0,
     0.0, 1.0,
+    0.0, 0.5,
+    0.5, 0.5,
+    0.5, 1.0,
     // Right
-    1.0, 1.0,
-    1.0, 0.0,
-    0.0, 0.0,
     0.0, 1.0,
+    0.0, 0.5,
+    0.5, 0.5,
+    0.5, 1.0,
     // Left
+    0.5, 1.0,
     0.0, 1.0,
-    1.0, 1.0,
-    1.0, 0.0,
-    0.0, 0.0,
+    0.5, 0.5,
+    0.0, 0.5,
   ];
 
 
@@ -110,7 +110,7 @@ export const makeLevel = (size: number) => {
   let vertexCount = 0;
   for (let x = 0; x < size; x++) {
     for (let y = 0; y < size; y++) {
-      const z = Math.round(Math.random() * 10);
+      const z = Math.round(Math.random() * 1);
       const shape = makeCube(new Vec2(x - size / 2, y - size / 2), 1, z);
       positions.push(...shape.positions);
       textureCoordinates.push(...shape.textureCoordinates);

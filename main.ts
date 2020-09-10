@@ -7,6 +7,7 @@ import { getProgramInfo, drawScene, initBuffers } from './scene';
 import { loadTexture } from './texture';
 // import Texture from './cubetexture.png';
 import Texture from './dirt.jpg';
+import { usePointerLock } from './pointerLock';
 // import Texture from './cubeatlas.png';
 // import Texture from './cubeatlas_original.png';
 
@@ -19,15 +20,16 @@ const canvas = document.getElementById('c') as HTMLCanvasElement;
 const setScreen = (canvas: HTMLCanvasElement) => {
   canvas.width = canvas.clientWidth;
   canvas.height = canvas.clientHeight;
-}
+};
 
-setScreen(canvas)
+setScreen(canvas);
 window.addEventListener('resize', () => setScreen(canvas));
 const gl = canvas.getContext('webgl2');
 
-
 if (gl === null) {
-  throw Error('Unable to initialize WebGL. Your browser or machine may not support it.');
+  throw Error(
+    'Unable to initialize WebGL. Your browser or machine may not support it.'
+  );
 }
 
 const shaderProgram = initShaderProgram(gl, vsSource, fsSource);
@@ -35,14 +37,24 @@ const programInfo = getProgramInfo(gl, shaderProgram);
 const buffers = initBuffers(gl);
 const texture = loadTexture(gl, Texture as string)!;
 
-console.log(programInfo)
-
+console.log(programInfo);
 
 let previous: number;
 let accumulator = 0.0; // stores incrementing value (in seconds)
-let rotateX = 0.0; // stores incrementing value (in seconds)
-let rotateY = 0.0; // stores incrementing value (in seconds)
-let rotateZ = 0.0; // stores incrementing value (in seconds)
+let dX = 0.0; // stores incrementing value (in seconds)
+let dY = 0.0; // stores incrementing value (in seconds)
+let dZ = 0.0; // stores incrementing value (in seconds)
+
+const camera = {
+  x: 0,
+  y: 0,
+};
+const { lock } = usePointerLock(canvas, camera);
+
+canvas.onclick = () => {
+  lock();
+};
+
 const update = (time: number) => {
   if (previous === undefined) {
     previous = time;
@@ -57,7 +69,7 @@ const update = (time: number) => {
   // }
 
   // game.draw(accumulator);
-  drawScene(gl, programInfo, buffers, texture, rotateX, rotateY, rotateZ);
+  drawScene(gl, programInfo, buffers, texture, camera, dX, dY, dZ);
   previous = time;
   window.requestAnimationFrame(update);
 };
@@ -65,20 +77,33 @@ const update = (time: number) => {
 window.requestAnimationFrame(update);
 
 window.addEventListener('keydown', (e) => {
-  const step = e.shiftKey ? -0.1 : 0.1;
-  console.log(e.key)
+  const step = 0.2;
+  console.log(e.key, e.keyCode);
   switch (e.key) {
     case 'ArrowUp':
-      rotateY += step;
+    case 'w':
+      dY -= step;
       break;
     case 'ArrowDown':
-      rotateY -= step;
+    case 's':
+      dY += step;
       break;
     case 'ArrowLeft':
-      rotateX += step;
+    case 'a':
+      dX += step;
       break;
     case 'ArrowRight':
-      rotateZ -= step;
+    case 'd':
+      dX -= step;
       break;
+    // case 'Enter':
+    //   window.requestAnimationFrame(update);
+    //   break;
   }
-})
+
+  // switch (e.keyCode) {
+  //   case 32:
+  //     dZ += e.shiftKey ? step : -step;
+  //     break;
+  // }
+});
