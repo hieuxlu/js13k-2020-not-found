@@ -1,57 +1,56 @@
-export const usePointerLock = (domElement: HTMLCanvasElement, camera: any) => {
-  let isLocked = false;
+export class PointerLockControls {
+  isLocked = false;
+  constructor(private domElement: HTMLCanvasElement, private camera: any) {
+    this.domElement.ownerDocument.addEventListener(
+      'mousemove',
+      this.onMouseMove.bind(this)
+    );
+    this.domElement.ownerDocument.addEventListener(
+      'pointerlockchange',
+      this.onPointerLockChange.bind(this)
+    );
+    this.domElement.ownerDocument.addEventListener(
+      'pointerlockerror',
+      this.onPointerLockError.bind(this)
+    );
+  }
 
-  const onMouseMove = (event: MouseEvent) => {
-    if (!isLocked) {
+  onMouseMove = (event: MouseEvent) => {
+    if (!this.isLocked) {
       return;
     }
 
     const movementX = event.movementX || 0;
     const movementY = event.movementY || 0;
-    console.log({ movementX, movementY });
-    camera.x -= movementX * 0.002;
-    camera.y -= movementY * 0.002;
+    this.camera.x -= movementX * 0.002;
+    this.camera.y -= movementY * 0.002;
   };
 
-  const onPointerLockChange = () => {
-    if (domElement.ownerDocument.pointerLockElement === domElement) {
-      isLocked = true;
+  onPointerLockChange = () => {
+    if (this.domElement.ownerDocument.pointerLockElement === this.domElement) {
+      this.isLocked = true;
     } else {
-      isLocked = false;
+      this.isLocked = false;
     }
   };
 
-  const onPointerLockError = (event: any) => {
+  onPointerLockError = (event: any) => {
     console.error('Unable to use Pointer Lock API', event);
   };
 
-  domElement.ownerDocument.addEventListener('mousemove', onMouseMove);
-  domElement.ownerDocument.addEventListener(
-    'pointerlockchange',
-    onPointerLockChange
-  );
-  domElement.ownerDocument.addEventListener(
-    'pointerlockerror',
-    onPointerLockError
-  );
-
-  return {
-    lock: () => {
-      domElement.requestPointerLock();
-    },
-    unlock: () => {
-      domElement.ownerDocument.exitPointerLock();
-    },
-    finish: () => {
-      domElement.ownerDocument.removeEventListener('mousemove', onMouseMove);
-      domElement.ownerDocument.removeEventListener(
-        'pointerlockchange',
-        onPointerLockChange
-      );
-      domElement.ownerDocument.removeEventListener(
-        'pointerlockerror',
-        onPointerLockError
-      );
-    },
+  lock = () => {
+    this.domElement.requestPointerLock();
   };
-};
+
+  unlock = () => {
+    this.domElement.ownerDocument.exitPointerLock();
+  };
+
+  moveRight = (distance: number) => {
+    this.camera.x += distance;
+  };
+
+  moveForward = (distance: number) => {
+    this.camera.z += distance;
+  };
+}

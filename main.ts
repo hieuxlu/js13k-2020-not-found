@@ -7,7 +7,7 @@ import { getProgramInfo, drawScene, initBuffers } from './scene';
 import { loadTexture } from './texture';
 // import Texture from './cubetexture.png';
 import Texture from './dirt.jpg';
-import { usePointerLock } from './pointerLock';
+import { PointerLockControls } from './pointerLock';
 // import Texture from './cubeatlas.png';
 // import Texture from './cubeatlas_original.png';
 
@@ -40,70 +40,118 @@ const texture = loadTexture(gl, Texture as string)!;
 console.log(programInfo);
 
 let previous: number;
-let accumulator = 0.0; // stores incrementing value (in seconds)
-let dX = 0.0; // stores incrementing value (in seconds)
-let dY = 0.0; // stores incrementing value (in seconds)
-let dZ = 0.0; // stores incrementing value (in seconds)
 
 const camera = {
   x: 0,
   y: 0,
+  z: 0,
 };
-const { lock } = usePointerLock(canvas, camera);
+
+const controls = new PointerLockControls(canvas, camera);
 
 canvas.onclick = () => {
-  lock();
+  controls.lock();
 };
+
+let moveForward: boolean = false;
+let moveBackward: boolean = false;
+let moveLeft: boolean = false;
+let moveRight: boolean = false;
+let canJump: boolean = false;
+let velocity = {
+  x: 0,
+  y: 0,
+  z: 0,
+};
+let direction = {
+  x: 0,
+  y: 0,
+  z: 0,
+};
+
+const onKeyDown = (event: KeyboardEvent) => {
+  switch (event.keyCode) {
+    case 38: // up
+    case 87: // w
+      moveForward = true;
+      break;
+
+    case 37: // left
+    case 65: // a
+      moveLeft = true;
+      break;
+
+    case 40: // down
+    case 83: // s
+      moveBackward = true;
+      break;
+
+    case 39: // right
+    case 68: // d
+      moveRight = true;
+      break;
+
+    case 32: // space
+      if (canJump === true) velocity.y += 350;
+      canJump = false;
+      break;
+  }
+};
+
+const onKeyUp = (event: KeyboardEvent) => {
+  switch (event.keyCode) {
+    case 38: // up
+    case 87: // w
+      moveForward = false;
+      break;
+
+    case 37: // left
+    case 65: // a
+      moveLeft = false;
+      break;
+
+    case 40: // down
+    case 83: // s
+      moveBackward = false;
+      break;
+
+    case 39: // right
+    case 68: // d
+      moveRight = false;
+      break;
+  }
+};
+
+window.addEventListener('keydown', onKeyDown);
+window.addEventListener('keyup', onKeyUp);
 
 const update = (time: number) => {
   if (previous === undefined) {
     previous = time;
   }
 
-  const dt = (time - previous) / 1000.0;
-  // accumulator += dt;
+  const delta = (time - previous) / 1000.0;
+  velocity.x -= velocity.x * 10.0 * delta;
+  velocity.z -= velocity.z * 10.0 * delta;
+  velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
 
-  // if (accumulator > 1.0 / Settings.tps) {
-  //   accumulator -= 1.0 / Settings.tps;
-  //   game.tick();
-  // }
+  direction.z = Number(moveForward) - Number(moveBackward);
+  direction.x = Number(moveRight) - Number(moveLeft);
 
-  // game.draw(accumulator);
-  drawScene(gl, programInfo, buffers, texture, camera, dX, dY, dZ);
+  if (moveForward || moveBackward) {
+    velocity.z -= direction.z * 400.0 * delta;
+  }
+  if (moveLeft || moveRight) {
+    velocity.x -= direction.x * 400.0 * delta;
+  }
+
+  controls.moveRight(-velocity.x * delta);
+  controls.moveForward(-velocity.z * delta);
+  // console.log({ velocity, direction });
+
+  drawScene(gl, programInfo, buffers, texture, camera);
   previous = time;
   window.requestAnimationFrame(update);
 };
 
 window.requestAnimationFrame(update);
-
-window.addEventListener('keydown', (e) => {
-  const step = 0.2;
-  console.log(e.key, e.keyCode);
-  switch (e.key) {
-    case 'ArrowUp':
-    case 'w':
-      dY -= step;
-      break;
-    case 'ArrowDown':
-    case 's':
-      dY += step;
-      break;
-    case 'ArrowLeft':
-    case 'a':
-      dX += step;
-      break;
-    case 'ArrowRight':
-    case 'd':
-      dX -= step;
-      break;
-    // case 'Enter':
-    //   window.requestAnimationFrame(update);
-    //   break;
-  }
-
-  // switch (e.keyCode) {
-  //   case 32:
-  //     dZ += e.shiftKey ? step : -step;
-  //     break;
-  // }
-});

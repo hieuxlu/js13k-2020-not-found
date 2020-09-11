@@ -97,10 +97,7 @@ export const drawScene = (
   programInfo: ProgramInfo,
   buffers: Buffers,
   texture: WebGLTexture,
-  camera: any,
-  dX: number,
-  dY: number,
-  dZ: number
+  camera: any
 ) => {
   gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
   gl.clearDepth(1.0); // Clear everything
@@ -116,11 +113,11 @@ export const drawScene = (
   // matches the display size of the canvas
   // and we only want to see objects between 0.1 units
   // and 100 units away from the camera
-  const fieldOfView = degToRad(45); // in radians
+  const fieldOfView = degToRad(75); // in radians
   const canvas = gl.canvas as HTMLCanvasElement;
   const aspect = canvas.clientWidth / canvas.clientHeight;
   const zNear = 0.1;
-  const zFar = 100.0;
+  const zFar = 1000.0;
   const projectionMatrix = mat4.create();
   const cameraMatrix = mat4.create();
   const viewMatrix = mat4.create();
@@ -129,8 +126,8 @@ export const drawScene = (
   // Handle resize viewport
   gl.viewport(0.0, 0.0, canvas.width, canvas.height);
 
-  mat4.fromYRotation(cameraMatrix, camera.Y);
-  mat4.translate(cameraMatrix, cameraMatrix, [0, 0, 200]);
+  mat4.fromYRotation(cameraMatrix, camera.y);
+  mat4.translate(cameraMatrix, cameraMatrix, [0, 3, 0]);
   mat4.invert(viewMatrix, cameraMatrix);
 
   // note: glmatrix.js always has the first argument as the destination to receive the result
@@ -144,26 +141,26 @@ export const drawScene = (
   mat4.translate(
     modelViewMatrix, // destination matrix
     modelViewMatrix, // matrix to translate
-    [-0.0, 0.0, -30.0] // amount to translate
+    [-0.0, 0.0, -0.0] // amount to translate
   );
 
   mat4.rotate(
     modelViewMatrix, // destination matrix
     modelViewMatrix, // matrix to rotate
-    degToRad(-84), // amount to rorate in radians
+    degToRad(-90), // amount to rorate in radians
     [1, 0, 0] // axis to rotate around
   );
 
   mat4.translate(
     modelViewMatrix, // destination matrix
     modelViewMatrix, // matrix to rotate
-    [dX, 0, 0] // axis to rotate around
+    [-camera.x, 0, 0] // axis to rotate around
   );
 
   mat4.translate(
     modelViewMatrix, // destination matrix
     modelViewMatrix, // matrix to rotate
-    [0, dY, 0] // axis to rotate around
+    [0, -camera.z, 0] // axis to rotate around
   );
 
   // mat4.translate(modelViewMatrix, // destination matrix

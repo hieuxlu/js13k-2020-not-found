@@ -80,8 +80,8 @@ export const makeCube = (pos: Vec2, size: number, z: number = 0) => {
     // Left
     0.5, 1.0,
     0.0, 1.0,
-    0.5, 0.5,
     0.0, 0.5,
+    0.5, 0.5,
   ];
 
 
