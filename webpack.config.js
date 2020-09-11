@@ -41,7 +41,7 @@ module.exports = (env, argv) => {
   }
 
   return {
-    entry: ['./main.ts'],
+    entry: ['./src/main.ts'],
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: '[name].[hash].js',
