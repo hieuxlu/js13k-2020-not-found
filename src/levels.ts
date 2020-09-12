@@ -1,4 +1,4 @@
-import { makeLevel } from "./build3d";
+import { makeLevel } from './build3d';
 
-export const world = makeLevel(100);
+export const world = makeLevel(20, 1, 1);
 console.log(world);

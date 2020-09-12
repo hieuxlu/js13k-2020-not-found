@@ -12,11 +12,18 @@ export class Vector3 {
     return [this.x, this.y, this.z];
   }
 
+  set vector(value: number[]) {
+    this.x = value[0] || 0;
+    this.y = value[1] || 0;
+    this.z = value[2] || 0;
+  }
+
   addScaledVector = (vec: number[], scale: number) => {
-    const sumVec = mul(vec, scale);
-    this.x += sumVec[0];
-    this.y += sumVec[1];
-    this.z += sumVec[2];
+    this.vector = add(this.vector, mul(vec, scale));
+  };
+
+  normalize = () => {
+    this.vector = normalize(this.vector);
   };
 }
 

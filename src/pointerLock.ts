@@ -54,8 +54,8 @@ export class PointerLockControls {
     // Z is up
     const movementZ = event.movementX || 0;
     const movementX = event.movementY || 0;
-    this.camera.quaternion.z -= movementZ * 0.002;
-    this.camera.quaternion.x -= movementX * 0.002;
+    this.camera.quaternion.z -= movementZ * 0.001;
+    this.camera.quaternion.x -= movementX * 0.001;
   };
 
   onPointerLockChange = () => {
@@ -85,6 +85,7 @@ export class PointerLockControls {
     }
 
     const vec = fromMatrixColumn(this.camera.localMatrix, 0);
+    vec[1] = 0;
     this.camera.position.addScaledVector(vec, distance);
   };
 
@@ -94,6 +95,7 @@ export class PointerLockControls {
     }
 
     const vec = fromMatrixColumn(this.camera.localMatrix, 1);
+    vec[1] = 0;
     this.camera.position.addScaledVector(vec, distance);
   };
 }

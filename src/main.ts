@@ -58,30 +58,35 @@ const update = (time: number) => {
     previous = time;
   }
 
-  const mass = 100.0;
-  const v = 10.0;
+  const massY = 100.0;
+  const massXZ = 80.0;
+  const accelerator = 20.0;
+  const gravity = 9.8;
+  const worldScale = 0.04;
   const delta = (time - previous) / 1000.0;
-  velocity.x -= velocity.x * v * delta;
-  velocity.z -= velocity.z * v * delta;
-  velocity.y -= 9.8 * mass * delta;
+  velocity.x -= velocity.x * accelerator * delta;
+  velocity.z -= velocity.z * accelerator * delta;
+  velocity.y -= gravity * massY * delta;
 
   direction.z = Number(moveForward) - Number(moveBackward);
   direction.x = Number(moveRight) - Number(moveLeft);
+  direction.normalize(); // this ensures consistent movements in all directions
 
   if (moveForward || moveBackward) {
-    velocity.z -= direction.z * mass * delta;
+    velocity.z -= direction.z * massXZ * delta;
   }
   if (moveLeft || moveRight) {
-    velocity.x -= direction.x * mass * delta;
+    velocity.x -= direction.x * massXZ * delta;
   }
 
   controls.moveRight(-velocity.x * delta);
   controls.moveForward(velocity.z * delta);
 
-  camera.position.y += velocity.y * 0.04 * delta;
-  if (camera.position.y < 3) {
+  camera.position.y += worldScale * velocity.y * delta;
+  const baseY = 2;
+  if (camera.position.y < baseY) {
     velocity.y = 0;
-    camera.position.y = 3;
+    camera.position.y = baseY;
 
     canJump = true;
   }
