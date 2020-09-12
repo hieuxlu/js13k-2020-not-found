@@ -3,6 +3,8 @@ import { makeCube, makeLevel } from './build3d';
 import { Vec2 } from './vector';
 import { world } from './levels';
 import { degToRad } from './math';
+import { Camera } from 'three/src/cameras/Camera';
+import { Matrix4 } from 'three/src/math/Matrix4';
 
 export interface ProgramInfo {
   program: WebGLProgram;
@@ -92,134 +94,92 @@ export const initBuffers = (gl: WebGLRenderingContext): Buffers => {
   };
 };
 
-export const drawScene = (
-  gl: WebGLRenderingContext,
-  programInfo: ProgramInfo,
-  buffers: Buffers,
-  texture: WebGLTexture,
-  camera: any
-) => {
-  gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
-  gl.clearDepth(1.0); // Clear everything
-  gl.enable(gl.DEPTH_TEST); // Enable depth testing
-  gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+// export const drawScene = (
+//   gl: WebGLRenderingContext,
+//   programInfo: ProgramInfo,
+//   buffers: Buffers,
+//   texture: WebGLTexture,
+//   camera: Camera
+// ) => {
+//   camera.updateMatrixWorld();
 
-  // Clear the canvas before we start drawing on it.
-  gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+//   gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
+//   gl.clearDepth(1.0); // Clear everything
+//   gl.enable(gl.DEPTH_TEST); // Enable depth testing
+//   gl.depthFunc(gl.LEQUAL); // Near things obscure far things
 
-  // Create a perspective matrix, a special matrix that is used to
-  // simulate the distortion of perspective in a camera
-  // Our field of view is 45 degrees, with a width/height ratio that
-  // matches the display size of the canvas
-  // and we only want to see objects between 0.1 units
-  // and 100 units away from the camera
-  const fieldOfView = degToRad(75); // in radians
-  const canvas = gl.canvas as HTMLCanvasElement;
-  const aspect = canvas.clientWidth / canvas.clientHeight;
-  const zNear = 0.1;
-  const zFar = 1000.0;
-  const projectionMatrix = mat4.create();
-  const cameraMatrix = mat4.create();
-  const viewMatrix = mat4.create();
-  const viewProjectionMatrix = mat4.create();
+//   // Clear the canvas before we start drawing on it.
+//   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // Handle resize viewport
-  gl.viewport(0.0, 0.0, canvas.width, canvas.height);
+//   // Create a perspective matrix, a special matrix that is used to
+//   // simulate the distortion of perspective in a camera
+//   // Our field of view is 45 degrees, with a width/height ratio that
+//   // matches the display size of the canvas
+//   // and we only want to see objects between 0.1 units
+//   // and 100 units away from the camera
+//   const canvas = gl.canvas as HTMLCanvasElement;
 
-  mat4.fromYRotation(cameraMatrix, camera.y);
-  mat4.translate(cameraMatrix, cameraMatrix, [0, 3, 0]);
-  mat4.invert(viewMatrix, cameraMatrix);
+//   // Handle resize viewport
+//   gl.viewport(0.0, 0.0, canvas.width, canvas.height);
 
-  // note: glmatrix.js always has the first argument as the destination to receive the result
-  mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
-  mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
+//   // Tell WebGL how to pull out the positions from the position buffer
+//   // into the vertexPosition attribute
+//   gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+//   gl.vertexAttribPointer(
+//     programInfo.attribLocations.vertexPosition,
+//     3,
+//     gl.FLOAT,
+//     false,
+//     0,
+//     0
+//   );
+//   gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
 
-  // Set the drawing position to the "identity" point, which is
-  // the center of the scene
-  const modelViewMatrix = mat4.create();
-  // Now move the drawing position a bit to where we want to start drawing the square
-  mat4.translate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to translate
-    [-0.0, 0.0, -0.0] // amount to translate
-  );
+//   // Tell WebGL how to pull out the colors from the color buffer
+//   // into the textureCoord attribute
+//   gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord!);
+//   gl.vertexAttribPointer(
+//     programInfo.attribLocations.textureCoord,
+//     2,
+//     gl.FLOAT,
+//     false,
+//     0,
+//     0
+//   );
+//   gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
 
-  mat4.rotate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to rotate
-    degToRad(-90), // amount to rorate in radians
-    [1, 0, 0] // axis to rotate around
-  );
+//   // Tell WebGL which indices to use to index the vertices
+//   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
 
-  mat4.translate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to rotate
-    [-camera.x, 0, 0] // axis to rotate around
-  );
+//   // Tell WebGL to use our program when drawing
+//   gl.useProgram(programInfo.program);
 
-  mat4.translate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to rotate
-    [0, -camera.z, 0] // axis to rotate around
-  );
+//   // Set the shader uniforms
+//   gl.uniformMatrix4fv(
+//     programInfo.uniformLocations.projectionMatrix,
+//     false,
+//     camera.projectionMatrix.toArray()
+//   );
 
-  // mat4.translate(modelViewMatrix, // destination matrix
-  //   modelViewMatrix, // matrix to rotate
-  //   [0, 0, dZ] // axis to rotate around
-  // );
+//   // const modelViewMatrix = new Matrix4();
+//   // modelViewMatrix.makeRotationFromQuaternion(camera.quaternion);
+//   // modelViewMatrix.setPosition(camera.position);
 
-  // Tell WebGL how to pull out the positions from the position buffer
-  // into the vertexPosition attribute
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-  gl.vertexAttribPointer(
-    programInfo.attribLocations.vertexPosition,
-    3,
-    gl.FLOAT,
-    false,
-    0,
-    0
-  );
-  gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
+//   gl.uniformMatrix4fv(
+//     programInfo.uniformLocations.modelViewMatrix,
+//     false,
+//     // modelViewMatrix
+//     camera.modelViewMatrix.toArray()
+//   );
 
-  // Tell WebGL how to pull out the colors from the color buffer
-  // into the textureCoord attribute
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord!);
-  gl.vertexAttribPointer(
-    programInfo.attribLocations.textureCoord,
-    2,
-    gl.FLOAT,
-    false,
-    0,
-    0
-  );
-  gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
+//   gl.activeTexture(gl.TEXTURE0);
+//   gl.bindTexture(gl.TEXTURE_2D, texture);
+//   gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
 
-  // Tell WebGL which indices to use to index the vertices
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
-
-  // Tell WebGL to use our program when drawing
-  gl.useProgram(programInfo.program);
-
-  // Set the shader uniforms
-  gl.uniformMatrix4fv(
-    programInfo.uniformLocations.projectionMatrix,
-    false,
-    viewProjectionMatrix
-  );
-  gl.uniformMatrix4fv(
-    programInfo.uniformLocations.modelViewMatrix,
-    false,
-    modelViewMatrix
-  );
-
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-  gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
-
-  gl.drawElements(
-    gl.TRIANGLES,
-    buffers.vertexCount,
-    gl.UNSIGNED_INT,
-    buffers.offset
-  );
-};
+//   gl.drawElements(
+//     gl.TRIANGLES,
+//     buffers.vertexCount,
+//     gl.UNSIGNED_INT,
+//     buffers.offset
+//   );
+// };

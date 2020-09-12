@@ -11,6 +11,7 @@ export const {
   PI,
 } = Math;
 export const PI2 = PI * 2;
+export const PI_2 = PI / 2;
 
 export const colour = (r: number, g: number, b: number) => [
   r / 255,
@@ -18,7 +19,9 @@ export const colour = (r: number, g: number, b: number) => [
   b / 255,
 ];
 
-export const clamp01 = (t: number) => (t > 0 ? (t > 1 ? 1 : t) : 0);
+export const clamp = (t: number, a: number, b: number) =>
+  t > a ? (t > b ? b : t) : a;
+export const clamp01 = (t: number) => clamp(t, 0, 1);
 
 export const angleLerp = (a0: number, a1: number, t: number) => {
   const da = (a1 - a0) % PI2;
