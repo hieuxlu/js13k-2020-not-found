@@ -11,6 +11,7 @@ export const {
   PI,
 } = Math;
 export const PI2 = PI * 2;
+export const PI_2 = PI / 2;
 
 export const colour = (r: number, g: number, b: number) => [
   r / 255,

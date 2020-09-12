@@ -5,16 +5,11 @@ import { Settings } from './settings';
 import { initShaderProgram, vsSource, fsSource } from './shader';
 import { getProgramInfo, drawScene, initBuffers } from './scene';
 import { loadTexture } from './texture';
-// import Texture from './cubetexture.png';
 import Texture from './dirt.jpg';
 import { PointerLockControls } from './pointerLock';
-// import Texture from './cubeatlas.png';
-// import Texture from './cubeatlas_original.png';
+import { Vector3 } from './vector3';
+import { Camera } from './camera';
 
-console.log(Texture);
-
-// const Draw = new Drawing(document.getElementById('c') as HTMLCanvasElement);
-// const game = new Game(level1, Draw);
 const canvas = document.getElementById('c') as HTMLCanvasElement;
 
 const setScreen = (canvas: HTMLCanvasElement) => {
@@ -37,15 +32,9 @@ const programInfo = getProgramInfo(gl, shaderProgram);
 const buffers = initBuffers(gl);
 const texture = loadTexture(gl, Texture as string)!;
 
-console.log(programInfo);
-
 let previous: number;
 
-const camera = {
-  x: 0,
-  y: 0,
-  z: 0,
-};
+const camera = new Camera();
 
 const controls = new PointerLockControls(canvas, camera);
 
@@ -58,18 +47,53 @@ let moveBackward: boolean = false;
 let moveLeft: boolean = false;
 let moveRight: boolean = false;
 let canJump: boolean = false;
-let velocity = {
-  x: 0,
-  y: 0,
-  z: 0,
-};
-let direction = {
-  x: 0,
-  y: 0,
-  z: 0,
+let velocity = new Vector3();
+let direction = new Vector3();
+
+window.addEventListener('keydown', onKeyDown);
+window.addEventListener('keyup', onKeyUp);
+
+const update = (time: number) => {
+  if (previous === undefined) {
+    previous = time;
+  }
+
+  const mass = 100.0;
+  const v = 10.0;
+  const delta = (time - previous) / 1000.0;
+  velocity.x -= velocity.x * v * delta;
+  velocity.z -= velocity.z * v * delta;
+  velocity.y -= 9.8 * mass * delta;
+
+  direction.z = Number(moveForward) - Number(moveBackward);
+  direction.x = Number(moveRight) - Number(moveLeft);
+
+  if (moveForward || moveBackward) {
+    velocity.z -= direction.z * mass * delta;
+  }
+  if (moveLeft || moveRight) {
+    velocity.x -= direction.x * mass * delta;
+  }
+
+  controls.moveRight(-velocity.x * delta);
+  controls.moveForward(velocity.z * delta);
+
+  camera.position.y += velocity.y * 0.04 * delta;
+  if (camera.position.y < 3) {
+    velocity.y = 0;
+    camera.position.y = 3;
+
+    canJump = true;
+  }
+
+  drawScene(gl, programInfo, buffers, texture, camera);
+  previous = time;
+  window.requestAnimationFrame(update);
 };
 
-const onKeyDown = (event: KeyboardEvent) => {
+window.requestAnimationFrame(update);
+
+function onKeyDown(event: KeyboardEvent) {
   switch (event.keyCode) {
     case 38: // up
     case 87: // w
@@ -96,9 +120,9 @@ const onKeyDown = (event: KeyboardEvent) => {
       canJump = false;
       break;
   }
-};
+}
 
-const onKeyUp = (event: KeyboardEvent) => {
+function onKeyUp(event: KeyboardEvent) {
   switch (event.keyCode) {
     case 38: // up
     case 87: // w
@@ -120,38 +144,4 @@ const onKeyUp = (event: KeyboardEvent) => {
       moveRight = false;
       break;
   }
-};
-
-window.addEventListener('keydown', onKeyDown);
-window.addEventListener('keyup', onKeyUp);
-
-const update = (time: number) => {
-  if (previous === undefined) {
-    previous = time;
-  }
-
-  const delta = (time - previous) / 1000.0;
-  velocity.x -= velocity.x * 10.0 * delta;
-  velocity.z -= velocity.z * 10.0 * delta;
-  velocity.y -= 9.8 * 100.0 * delta; // 100.0 = mass
-
-  direction.z = Number(moveForward) - Number(moveBackward);
-  direction.x = Number(moveRight) - Number(moveLeft);
-
-  if (moveForward || moveBackward) {
-    velocity.z -= direction.z * 400.0 * delta;
-  }
-  if (moveLeft || moveRight) {
-    velocity.x -= direction.x * 400.0 * delta;
-  }
-
-  controls.moveRight(-velocity.x * delta);
-  controls.moveForward(-velocity.z * delta);
-  // console.log({ velocity, direction });
-
-  drawScene(gl, programInfo, buffers, texture, camera);
-  previous = time;
-  window.requestAnimationFrame(update);
-};
-
-window.requestAnimationFrame(update);
+}

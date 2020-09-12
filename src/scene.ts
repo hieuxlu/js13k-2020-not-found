@@ -2,7 +2,8 @@ import { mat4 } from 'gl-matrix';
 import { makeCube, makeLevel } from './build3d';
 import { Vec2 } from './vector';
 import { world } from './levels';
-import { degToRad } from './math';
+import { degToRad, PI, PI_2 } from './math';
+import { Camera } from './camera';
 
 export interface ProgramInfo {
   program: WebGLProgram;
@@ -97,7 +98,7 @@ export const drawScene = (
   programInfo: ProgramInfo,
   buffers: Buffers,
   texture: WebGLTexture,
-  camera: any
+  camera: Camera
 ) => {
   gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
   gl.clearDepth(1.0); // Clear everything
@@ -107,66 +108,10 @@ export const drawScene = (
   // Clear the canvas before we start drawing on it.
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-  // Create a perspective matrix, a special matrix that is used to
-  // simulate the distortion of perspective in a camera
-  // Our field of view is 45 degrees, with a width/height ratio that
-  // matches the display size of the canvas
-  // and we only want to see objects between 0.1 units
-  // and 100 units away from the camera
-  const fieldOfView = degToRad(75); // in radians
   const canvas = gl.canvas as HTMLCanvasElement;
-  const aspect = canvas.clientWidth / canvas.clientHeight;
-  const zNear = 0.1;
-  const zFar = 1000.0;
-  const projectionMatrix = mat4.create();
-  const cameraMatrix = mat4.create();
-  const viewMatrix = mat4.create();
-  const viewProjectionMatrix = mat4.create();
 
   // Handle resize viewport
   gl.viewport(0.0, 0.0, canvas.width, canvas.height);
-
-  mat4.fromYRotation(cameraMatrix, camera.y);
-  mat4.translate(cameraMatrix, cameraMatrix, [0, 3, 0]);
-  mat4.invert(viewMatrix, cameraMatrix);
-
-  // note: glmatrix.js always has the first argument as the destination to receive the result
-  mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
-  mat4.multiply(viewProjectionMatrix, projectionMatrix, viewMatrix);
-
-  // Set the drawing position to the "identity" point, which is
-  // the center of the scene
-  const modelViewMatrix = mat4.create();
-  // Now move the drawing position a bit to where we want to start drawing the square
-  mat4.translate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to translate
-    [-0.0, 0.0, -0.0] // amount to translate
-  );
-
-  mat4.rotate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to rotate
-    degToRad(-90), // amount to rorate in radians
-    [1, 0, 0] // axis to rotate around
-  );
-
-  mat4.translate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to rotate
-    [-camera.x, 0, 0] // axis to rotate around
-  );
-
-  mat4.translate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to rotate
-    [0, -camera.z, 0] // axis to rotate around
-  );
-
-  // mat4.translate(modelViewMatrix, // destination matrix
-  //   modelViewMatrix, // matrix to rotate
-  //   [0, 0, dZ] // axis to rotate around
-  // );
 
   // Tell WebGL how to pull out the positions from the position buffer
   // into the vertexPosition attribute
@@ -204,12 +149,12 @@ export const drawScene = (
   gl.uniformMatrix4fv(
     programInfo.uniformLocations.projectionMatrix,
     false,
-    viewProjectionMatrix
+    camera.projectionMatrix
   );
   gl.uniformMatrix4fv(
     programInfo.uniformLocations.modelViewMatrix,
     false,
-    modelViewMatrix
+    camera.modelViewMatrix
   );
 
   gl.activeTexture(gl.TEXTURE0);
